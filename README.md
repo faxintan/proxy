@@ -4,8 +4,7 @@
 ### Nodejs Web Proxy Tool
 
 
-[![Build Status](https://api.travis-ci.org/tj/commander.js.svg?branch=master)](http://travis-ci.org/tj/commander.js)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FSBoudrias%2FInquirer.js.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FSBoudrias%2FInquirer.js?ref=badge_shield) 
+![GitHub package.json version](https://img.shields.io/github/package-json/v/faxintan/proxy)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](contributing.md)
 
 
@@ -43,7 +42,8 @@ supported we will talk later.
 
 <a name="document"></a>
 
-### installation
+
+## installation
 
 <a name="installation"></a>
 
@@ -51,7 +51,7 @@ supported we will talk later.
 npm install @fxtop/proxy
 ```
 
-### examples
+## examples
 
 <a name="examples"></a>
 
