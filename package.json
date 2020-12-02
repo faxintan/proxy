@@ -1,6 +1,6 @@
 {
   "name": "@fxtop/proxy",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "a lightweight web proxy tool based on Nodejs",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
