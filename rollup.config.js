@@ -40,7 +40,7 @@ export default {
     {
       file: pkg.main,
       format: 'cjs',
-      sourcemap: true,
+      // sourcemap: true,
     },
     {
       file: pkg.module,
