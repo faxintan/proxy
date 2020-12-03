@@ -55,7 +55,7 @@ npm install @fxtop/proxy
 
 <a name="examples"></a>
 
-before proxy, we could invoke `Proxy.importRootCert` to import Root Cert into system trust list 
+before proxy, we could invoke `Proxy.trustRootCert` to import Root Cert into system trust list 
 and then, invoke `Proxy.startSysProxy` to set system's web proxy to assigned IP and Port.
 finally, we just need to start the proxy server to capture http(s) request.
 
