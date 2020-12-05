@@ -11,6 +11,10 @@ const NOTIFIER = 'Fast-Proxy Server';
 
 class Proxy {
     /**
+     * Status - 代理服务状态
+     */
+    status: string;
+    /**
      * Options - 初始化配置信息
      */
     private options: Proxy.Options;
@@ -56,7 +60,10 @@ class Proxy {
         // 端口占用校验 httpPort, httpsPort
         this.lifecycle.beforeStart?.(this.options);
 
-        this.gateway();
+        if ('start' !== this.status) {
+            this.gateway();
+            this.status = 'start';
+        }
 
         this.lifecycle.afterStart?.();
     }
@@ -319,6 +326,8 @@ class Proxy {
         this.httpsProxy = undefined;
 
         this.lifecycle.afterClose?.();
+
+        this.status = 'closed';
     }
 
     static createHttpsProxy(ca?: Proxy.CA): https.Server {
