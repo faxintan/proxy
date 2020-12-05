@@ -39,7 +39,6 @@
   "author": "faxintan",
   "license": "MIT",
   "dependencies": {
-    "@fxtop/winffi": "^0.1.0",
     "mkcert": "^1.4.0",
     "regedit": "^3.0.3"
   },

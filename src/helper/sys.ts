@@ -9,9 +9,6 @@ export interface Result {
   message?: string;
 }
 
-const TEMP_CA_CERT_FILE = 'cacert.pem';
-const TEMP_REG_VALUES_FILE = 'reg_values.json';
-
 function getSystemName(): string {
   const opsys = process.platform.toLowerCase();
 
@@ -39,6 +36,7 @@ export default {
    */
   trustRootCert(path?: string): Promise<Result> {
     const sysName = getSystemName();
+    const TEMP_CA_CERT_FILE = 'temp-cacert.pem';
 
     return new Promise((resolve, reject) => {
       if (!path && !fstemp.exists(TEMP_CA_CERT_FILE)) {
@@ -58,7 +56,7 @@ export default {
             : reject({ error: 21, message: '导入根证书失败' });
           break;
         default:
-          return reject({ error: 10, message: '没有匹配该系统的处理' });
+          return reject({ error: 10, message: '未匹配到该系统的处理' });
       }
     });
   },
@@ -81,30 +79,16 @@ export default {
 
     switch (sysName) {
       case 'Windows':
-        return new Promise((resolve, reject) => {
-          syswin
-            .startSysProxy(port, isProxyHttps)
-            .then((result) => {
-              // Tips: 如果存在，不允许覆盖
-              if (!fstemp.exists(TEMP_REG_VALUES_FILE)) {
-                fstemp.writeJSON(TEMP_REG_VALUES_FILE, result.data);
-              }
-
-              resolve(result);
-            })
-            .catch(reject);
-        });
+        return syswin.startSysProxy(port, isProxyHttps);
       case 'MacOS':
         return sysmac.startSysProxy(port, isProxyHttps);
       default:
-        return Promise.reject({ error: 10, message: '没有匹配该系统的处理' });
+        return Promise.reject({ error: 10, message: '未匹配到该系统的处理' });
     }
   },
 
   /**
    * Stop System Proxy - 关闭系统代理
-   *
-   * @param {any} regData - 网络代理配置(恢复代理前的配置)
    *
    * @return {Promise} 关闭系统代理结果
    *
@@ -115,25 +99,11 @@ export default {
 
     switch (sysName) {
       case 'Windows':
-        return new Promise((resolve, reject) => {
-          const tempData = fstemp.readJSON(TEMP_REG_VALUES_FILE);
-          const isTempExist = fstemp.exists(TEMP_REG_VALUES_FILE);
-
-          syswin
-            .stopSysProxy(isTempExist ? tempData : undefined)
-            .then((result) => {
-              if (isTempExist) {
-                fstemp.delete(TEMP_REG_VALUES_FILE);
-              }
-
-              resolve(result);
-            })
-            .catch(reject);
-        });
+        return syswin.stopSysProxy();
       case 'MacOS':
         return sysmac.stopSysProxy();
       default:
-        return Promise.reject({ error: 10, message: '没有匹配该系统的处理' });
+        return Promise.reject({ error: 10, message: '未匹配到该系统的处理' });
     }
   },
 };

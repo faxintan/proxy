@@ -4,7 +4,7 @@ import path from 'path';
 const tempDir = path.join(__dirname, './temp');
 fs.mkdirSync(tempDir, { recursive: true });
 
-export default {
+const fstemp = {
     readFile(filename: string): string {
         try {
             return fs.readFileSync(path.join(tempDir, filename), { encoding: 'utf-8' })
@@ -51,6 +51,7 @@ export default {
     },
 
     delete(filename: string) {
+        if (!fstemp.exists(filename)) return true;
         try {
             fs.unlinkSync(path.join(tempDir, filename));
             return true;
@@ -63,3 +64,5 @@ export default {
         return path.join(tempDir, filename);
     },
 }
+
+export default fstemp;

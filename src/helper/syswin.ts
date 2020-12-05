@@ -2,9 +2,14 @@ import _path from 'path';
 import { execSync } from 'child_process';
 // @ts-ignore
 import regedit from 'regedit';
+import fstemp from './fstemp';
 
-const REG_INET_KEY =
-  'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings';
+// TODO: 代理相关代码优化
+/**
+ * 通过cmd操作注册表 https://blog.csdn.net/hongkaihua1987/article/details/89414691
+ * 通过脚本控制代理信息刷新 https://stackoverflow.com/questions/45371133/changes-to-proxy-settings-in-windows-registry-have-no-effect
+ * 恢复代理的使用脚本链接 https://superuser.com/questions/809864/windows-script-to-toggle-automatic-configuration-script-checkbox-without-removin
+ */
 
 interface Result {
   error: number;
@@ -16,20 +21,29 @@ interface Result {
  * Enforces Sys Proxy - 刷新代理配置，使注册表配置生效
  */
 function enforceSysProxy(): boolean {
-  const winffi = require('@fxtop/winffi');
+  const tempFilename = 'refresh-system-setting.ps1';
+
+  if (!fstemp.exists(tempFilename)) {
+    fstemp.writeFile(
+      tempFilename,
+      `$signature = @'
+          [DllImport("wininet.dll", SetLastError = true, CharSet=CharSet.Auto)]
+          public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);
+      '@
+      $INTERNET_OPTION_SETTINGS_CHANGED = 39
+      $type = Add-Type -MemberDefinition $signature -Name wininet -Namespace pinvoke -PassThru
+      $result = $type::InternetSetOption(0, $INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+      echo $result`
+    );
+  }
 
   try {
-    // const INTERNET_OPTION_REFRESH = 37
-    const INTERNET_OPTION_SETTINGS_CHANGED = 39;
-    const inet = winffi.Library('wininet', {
-      InternetSetOptionW: ['bool', ['int', 'int', 'int', 'int']],
-    });
-
-    // Tips: 刷新注册表后，无法再通过regedit.putValue更新注册表信息
-    // inet.InternetSetOptionW(0, INTERNET_OPTION_REFRESH, 0, 0);
-    inet.InternetSetOptionW(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0);
-
-    return true;
+    const result = execSync(
+      `powershell -ExecutionPolicy Bypass -Command "${fstemp.getAbsPath(
+        tempFilename
+      )}"`
+    );
+    return result.toString().toLowerCase().indexOf('true') === 0;
   } catch (e) {
     return false;
   }
@@ -67,13 +81,15 @@ export default {
    * error不为零，代表启动失败，可通过message查看失败原因。
    */
   startSysProxy(port: number, isProxyHttps: boolean = false): Promise<Result> {
-    const getRegList =
-      process.arch === 'x64' ? regedit.arch.list64 : regedit.arch.list32;
+    const tempFilename = 'regedit-inet-values.json';
+    const getRegList = process.arch === 'x64' ? regedit.arch.list64 : regedit.arch.list32;
+    const REG_INET_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings';
 
     return new Promise((resolve, reject) => {
       getRegList(REG_INET_KEY, (err1: any, result: any) => {
-        if (err1)
+        if (err1) {
           return reject({ error: 1, message: '读取注册表代理信息失败' });
+        }
 
         // 设置系统网络接口代理至mock系统
         regedit.putValue(
@@ -83,25 +99,28 @@ export default {
               ProxyOverride: { type: 'REG_SZ', value: '<-loopback>' },
               ProxyServer: {
                 type: 'REG_SZ',
-                value: `http=127.0.0.1:${port}${
-                  isProxyHttps ? ';https=127.0.0.1:' + port : ''
-                }`,
+                value: `http=127.0.0.1:${port}${isProxyHttps ? ';https=127.0.0.1:' + port : ''
+                  }`,
               },
               AutoConfigURL: { type: 'REG_SZ', value: '' },
               AutoDetect: { type: 'REG_DWORD', value: 0 },
             },
           },
           (err2: any) => {
-            if (err2)
+            if (err2) {
               return reject({ error: 2, message: '设置系统网络代理配置失败' });
+            }
 
-            if (!enforceSysProxy())
-              return reject({ error: 3, message: '代理配置未生效' });
+            if (!enforceSysProxy()) {
+              return reject({ error: 3, message: '代理配置更新失败' });
+            }
 
-            resolve({
-              error: 0,
-              data: { [REG_INET_KEY]: (result[REG_INET_KEY] || {}).values },
-            });
+            // Tips: 如果存在，不允许覆盖
+            if (!fstemp.exists(tempFilename)) {
+              fstemp.writeJSON(tempFilename, { [REG_INET_KEY]: (result[REG_INET_KEY] || {}).values });
+            }
+
+            resolve({ error: 0, message: '代理配置已更新' });
           }
         );
       });
@@ -111,34 +130,42 @@ export default {
   /**
    * Stop System Proxy - 关闭系统代理
    *
-   * @param {any} regData - 网络代理配置(恢复代理前的配置)
-   *
    * @return {Promise} 关闭系统代理结果
    *
    * @description 返回结果Promise中，data为成功设置到系统注册表中的代理配置。
    * error不为零，代表关闭失败，可通过message查看失败原因。
    */
-  stopSysProxy(regData?: any): Promise<Result> {
+  stopSysProxy(): Promise<Result> {
     return new Promise((resolve, reject) => {
-      let data = regData;
+      const tempFilename = 'regedit-inet-values.json';
+      const REG_INET_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings';
 
-      if (!data || !data[REG_INET_KEY]) {
-        data = {
-          [REG_INET_KEY]: {
-            ProxyEnable: { type: 'REG_DWORD', value: 0 },
-            ProxyOverride: { type: 'REG_SZ', value: '' },
-            ProxyServer: { type: 'REG_SZ', value: '' },
-          },
-        };
+      let inetValues: object = {
+        [REG_INET_KEY]: {
+          ProxyEnable: { type: 'REG_DWORD', value: 0 },
+          ProxyOverride: { type: 'REG_SZ', value: '' },
+          ProxyServer: { type: 'REG_SZ', value: '' },
+        },
+      };
+
+      // Tips: 如果存在，直接恢复
+      if (fstemp.exists(tempFilename)) {
+        inetValues = fstemp.readJSON(tempFilename);
       }
 
-      regedit.putValue(data, (err: any) => {
-        if (err) return reject({ error: 2, message: '重置网络代理配置失败' });
+      regedit.putValue(inetValues, (err: any) => {
+        if (err) {
+          return reject({ error: 2, message: '重置网络代理配置失败' });
+        }
 
-        if (!enforceSysProxy())
-          return reject({ error: 3, message: '代理配置未生效' });
+        if (!enforceSysProxy()) {
+          return reject({ error: 3, message: '代理配置更新失败' });
+        }
 
-        resolve({ error: 0, data });
+        // Tips: 恢复配置后，删除备份
+        fstemp.delete(tempFilename);
+
+        resolve({ error: 0, message: '代理配置已更新' });
       });
     });
   },

@@ -1051,29 +1051,6 @@
         "to-fast-properties": "^2.0.0"
       }
     },
-    "@fxtop/winffi": {
-      "version": "0.1.1",
-      "resolved": "https://registry.npmjs.org/@fxtop/winffi/-/winffi-0.1.1.tgz",
-      "integrity": "sha512-GWkgpm6C6k/FY3lTzPPEtz2/37uOTcMU45Yy5QCjH1QrFa8gJMPvLF1Hq4ra6IkC9vimmR0PWss0bi29o5iYiw==",
-      "requires": {
-        "debug": "^4.3.1"
-      },
-      "dependencies": {
-        "debug": {
-          "version": "4.3.1",
-          "resolved": "https://registry.npmjs.org/debug/-/debug-4.3.1.tgz",
-          "integrity": "sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==",
-          "requires": {
-            "ms": "2.1.2"
-          }
-        },
-        "ms": {
-          "version": "2.1.2",
-          "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.2.tgz",
-          "integrity": "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="
-        }
-      }
-    },
     "@rollup/plugin-babel": {
       "version": "5.2.1",
       "resolved": "https://registry.npmjs.org/@rollup/plugin-babel/-/plugin-babel-5.2.1.tgz",
