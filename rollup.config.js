@@ -13,7 +13,7 @@ export default {
   input: './src/index.ts',
 
   // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
-  // external: ['lodash'],
+  external: ['mkcert', 'regedit'],
 
   plugins: [
     // Allows node_modules resolution (include package code)
