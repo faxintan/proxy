@@ -36,7 +36,7 @@ export default {
    */
   trustRootCert(path?: string): Promise<Result> {
     const sysName = getSystemName();
-    const TEMP_CA_CERT_FILE = 'temp-cacert.pem';
+    const TEMP_CA_CERT_FILE = 'temp-root-cert.pem';
 
     return new Promise((resolve, reject) => {
       if (!path && !fstemp.exists(TEMP_CA_CERT_FILE)) {
