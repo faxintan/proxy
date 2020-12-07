@@ -153,7 +153,7 @@ e.g. import root cert into system trust list, and set system web proxy.
 
 <a name="feature"></a>
 
-@fxtop/proxy@0.1.5
+### @fxtop/proxy@0.1.5
 
 - proxy http & https
 - proxy lifecycle hooks
@@ -161,6 +161,11 @@ e.g. import root cert into system trust list, and set system web proxy.
 - system web proxy control
 - import root certificate into system trust list
 - https certificate auto-generate
+
+### @fxtop/proxy@0.1.6
+
+- optimize the code, and remove @fxtop/winffi dependency
+- change the way to set windows web proxy, much better compatible
 
 ## [support](#support)
 
