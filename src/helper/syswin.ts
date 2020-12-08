@@ -17,6 +17,16 @@ interface Result {
   message?: string;
 }
 
+// Tips: 脚本容易受空格、回车等特殊字符影响，请勿格式化
+const scriptPowershell = `$signature = @'
+[DllImport("wininet.dll", SetLastError = true, CharSet=CharSet.Auto)]
+public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);
+'@
+$INTERNET_OPTION_SETTINGS_CHANGED = 39
+$type = Add-Type -MemberDefinition $signature -Name wininet -Namespace pinvoke -PassThru
+$result = $type::InternetSetOption(0, $INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+echo $result`;
+
 /**
  * Enforces Sys Proxy - 刷新代理配置，使注册表配置生效
  */
@@ -24,17 +34,7 @@ function enforceSysProxy(): boolean {
   const tempFilename = 'refresh-system-setting.ps1';
 
   if (!fstemp.exists(tempFilename)) {
-    fstemp.writeFile(
-      tempFilename,
-      `$signature = @'
-          [DllImport("wininet.dll", SetLastError = true, CharSet=CharSet.Auto)]
-          public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int dwBufferLength);
-      '@
-      $INTERNET_OPTION_SETTINGS_CHANGED = 39
-      $type = Add-Type -MemberDefinition $signature -Name wininet -Namespace pinvoke -PassThru
-      $result = $type::InternetSetOption(0, $INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
-      echo $result`
-    );
+    fstemp.writeFile(tempFilename, scriptPowershell);
   }
 
   try {
@@ -111,13 +111,13 @@ export default {
               return reject({ error: 2, message: '设置系统网络代理配置失败' });
             }
 
-            if (!enforceSysProxy()) {
-              return reject({ error: 3, message: '代理配置更新失败' });
-            }
-
             // Tips: 如果存在，不允许覆盖
             if (!fstemp.exists(tempFilename)) {
               fstemp.writeJSON(tempFilename, { [REG_INET_KEY]: (result[REG_INET_KEY] || {}).values });
+            }
+
+            if (!enforceSysProxy()) {
+              return reject({ error: 3, message: '代理配置更新失败' });
             }
 
             resolve({ error: 0, message: '代理配置已更新' });
