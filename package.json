@@ -1,6 +1,9 @@
 {
   "name": "@fxtop/proxy",
   "version": "0.1.7",
+  "license": "MIT",
+  "author": "Louis",
+  "homepage": "https://github.com/faxintan/proxy",
   "description": "a lightweight web proxy tool based on Nodejs",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -8,6 +11,10 @@
   "files": [
     "/dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faxintan/proxy"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "http://registry.npmjs.org/"
@@ -36,8 +43,6 @@
     "mock",
     "mock-server"
   ],
-  "author": "faxintan",
-  "license": "MIT",
   "dependencies": {
     "mkcert": "^1.4.0",
     "regedit": "^3.0.3"
